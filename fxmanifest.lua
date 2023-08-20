@@ -3,6 +3,7 @@ game "gta5"
 
 author '_badlad'
 
+version '1.0.1'
 
 client_script "config.lua"
 client_script "client.lua"
