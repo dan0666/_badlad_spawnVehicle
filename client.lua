@@ -22,18 +22,22 @@ AddEventHandler("callinganimation", function(vehicleModel)
     end
 end)
 
-function GenerateRandomPlate()
-    local plate = ""
-    local characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+function GenerateRandomPlate(inputPlate)
+    local plate = inputPlate or Config.ChangePlateName
+    local characters = Config.RandomPlateCharacters
     math.randomseed(GetGameTimer())
 
-    for i = 1, 8 do
+    local remainingLength = 8 - #plate
+
+    -- Generate the remaining random characters
+    for i = 1, remainingLength do
         local charIndex = math.random(1, #characters)
         plate = plate .. characters:sub(charIndex, charIndex)
     end
 
     return plate
 end
+
 
 RegisterNetEvent("spawnIronCarClient")
 AddEventHandler("spawnIronCarClient", function(carModel)
@@ -64,11 +68,6 @@ AddEventHandler("spawnIronCarClient", function(carModel)
     
     SetEntityAsNoLongerNeeded(spawnedCar)
     -- Show a notification that there's no free space to spawn the vehicle
---[[else
-    local configMessage = Config.NoFreeSpaceMessage
-    ESX.ShowNotification(configMessage)
-end
-end)]]
 else
     local configMessage = Config.NoFreeSpaceMessage
     if Config.UseESXNotifications then
@@ -126,6 +125,7 @@ function CheckSpaceForVehicle(coords)
     return not collision  -- Return true if space is clear
 end
 
+
 RegisterCommand(Config.DeleteCommand, function()
     local playerPed = PlayerPedId()
     local playerVehicle = GetVehiclePedIsIn(playerPed, false)
@@ -172,7 +172,11 @@ RegisterCommand(Config.DeleteCommand, function()
                 
                 if not IsPedInVehicle(playerPed, playerVehicle, false) then
                     isVehicleLeft = true
-                    displayText = Config.leftVehicleCancelMessage
+                    if Config.UseESXNotifications then
+                        ESX.ShowNotification(Config.vehicleMovedCancelMessage)
+                    else
+                        SendCustomNotification(Config.vehicleMovedCancelMessage)
+                    end
                 elseif vehicleMoved then
                     isVehicleLeft = true
                     displayText = Config.vehicleMovedCancelMessage
@@ -218,3 +222,5 @@ RegisterCommand(Config.DeleteCommand, function()
         Citizen.Wait(2000)  -- Wait for 2 seconds
     end
 end, false)
+
+
