@@ -1,4 +1,5 @@
 ESX = nil
+local lastSpawnTime = {}
 
 TriggerEvent('esx:getSharedObject', function(obj)
     ESX = obj
@@ -41,14 +42,35 @@ end
 
 RegisterNetEvent("spawnIronCarClient")
 AddEventHandler("spawnIronCarClient", function(carModel)
+    local playerPed = PlayerPedId()
+    local playerId = PlayerId()
+
+    -- Check if cooldown is enabled
+    if Config.EnableCooldown then
+        -- Check if there's a cooldown for this player
+        if lastSpawnTime[playerId] and (GetGameTimer() - lastSpawnTime[playerId]) < (Config.SpawnCooldown * 1000) then
+            local remainingCooldown = math.floor((Config.SpawnCooldown * 1000 - (GetGameTimer() - lastSpawnTime[playerId])) / 1000)
+            local message = string.format(Config.CooldownMessage, remainingCooldown)  -- Use the configured message
+            
+            if Config.UseESXNotifications then
+                ESX.ShowNotification(message)
+            else
+                SetNotificationTextEntry("STRING")
+                AddTextComponentSubstringPlayerName(message)
+                DrawNotification(false, false)
+            end
+            return  -- Exit the event handler, as the player is still on cooldown.
+        end
+    end
+
+    -- If the player is not on cooldown or cooldown is disabled, proceed with vehicle spawning logic
     RequestModel(carModel)
     while not HasModelLoaded(carModel) do
         Citizen.Wait(0)
     end
-    local playerPed = PlayerPedId()
+
     local playerCoords = GetEntityCoords(playerPed)
     local spawnDistance = 4.0
-
     local spawnCoords = GetOffsetFromEntityInWorldCoords(playerPed, 0.0, spawnDistance, 0.0)
 
     local isSpaceFree = CheckSpaceForVehicle(spawnCoords)
@@ -59,26 +81,29 @@ AddEventHandler("spawnIronCarClient", function(carModel)
             Citizen.Wait(0)
         end
 
-    local spawnedCar = CreateVehicle(carModel, spawnCoords.x, spawnCoords.y, spawnCoords.z, GetEntityHeading(playerPed), true, false)
-    
-    local plate = GenerateRandomPlate()
-    SetVehicleNumberPlateText(spawnedCar, plate)  -- Assign the random plate to the spawned car
-    
-    TriggerEvent('cd_garage:AddKeys', plate) -- Trigger the 'cd_garage:AddKeys' event with the generated plate
-    
-    SetEntityAsNoLongerNeeded(spawnedCar)
-    -- Show a notification that there's no free space to spawn the vehicle
-else
-    local configMessage = Config.NoFreeSpaceMessage
-    if Config.UseESXNotifications then
-        ESX.ShowNotification(configMessage)
+        local spawnedCar = CreateVehicle(carModel, spawnCoords.x, spawnCoords.y, spawnCoords.z, GetEntityHeading(playerPed), true, false)
+
+        local plate = GenerateRandomPlate()
+        SetVehicleNumberPlateText(spawnedCar, plate)
+
+        TriggerEvent('cd_garage:AddKeys', plate)
+
+        SetEntityAsNoLongerNeeded(spawnedCar)
+
+        -- Update the last spawn time for this player
+        lastSpawnTime[playerId] = GetGameTimer()
     else
-        SetNotificationTextEntry("STRING")
-        AddTextComponentSubstringPlayerName(configMessage)
-        DrawNotification(false, false)
+        local configMessage = Config.NoFreeSpaceMessage
+        if Config.UseESXNotifications then
+            ESX.ShowNotification(configMessage)
+        else
+            SetNotificationTextEntry("STRING")
+            AddTextComponentSubstringPlayerName(configMessage)
+            DrawNotification(false, false)
+        end
     end
-end
 end)
+    
 
 function CheckSpaceForVehicle(coords)
     local collision = false

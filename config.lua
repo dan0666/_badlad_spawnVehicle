@@ -17,6 +17,10 @@ Config.NotificationWaitTime = 30000                                             
 Config.ChangePlateName = "ABC"                                                              -- You can change the plate name. (It fills automatically up to 8 numbers/letters. If you don't set it up to 8 symbols, the code automaticly sets up)
 Config.RandomPlateCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"                       -- It generates numbers and letters for the spawned vehicle. (You can change it if needed)
 
+Config.EnableCooldown = true                                                                -- Set to true to enable cooldown, false to disable (default: true)
+Config.SpawnCooldown = 120                                                                  -- 2 minutes (you can change this value)
+Config.CooldownMessage = "You must wait %s seconds before spawning another vehicle."        -- Cooldown message with a placeholder for the remaining time
+
 -- Define your items and their corresponding vehicle spawns here.
 Config.UsableItems = {
     ["your_vehicle_item"] = {                                                               -- Your spawn item name from your database.
