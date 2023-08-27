@@ -21,6 +21,13 @@ Config.EnableCooldown = true                                                    
 Config.SpawnCooldown = 120                                                                  -- 2 minutes (you can change this value)
 Config.CooldownMessage = "You must wait %s seconds before spawning another vehicle."        -- Cooldown message with a placeholder for the remaining time
 
+Config.EnableUnlockControl = true                                                           -- Set to true to enable the unlock control handler, false to disable it
+Config.UnlockKey = 182                                                                      -- Key code for "L" key (you can change this value)
+Config.LockedNotification = "Vehicle locked."                                               -- You can change the text.
+Config.UnlockedNotification = "Vehicle unlocked."                                           -- You can change the text.
+
+Config.CdGarageKeys = false                                                                 -- Set to true to enable the cd_garage resource (Its only if you use cd_garage) If you set true, please set Config.EnableUnlockControl to false.
+
 -- Define your items and their corresponding vehicle spawns here.
 Config.UsableItems = {
     ["your_vehicle_item"] = {                                                               -- Your spawn item name from your database.

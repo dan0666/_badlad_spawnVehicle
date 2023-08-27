@@ -86,12 +86,75 @@ AddEventHandler("spawnIronCarClient", function(carModel)
         local plate = GenerateRandomPlate()
         SetVehicleNumberPlateText(spawnedCar, plate)
 
-        TriggerEvent('cd_garage:AddKeys', plate)
+        if Config.CdGarageKeys then
+            TriggerEvent('cd_garage:AddKeys', plate) -- Trigger the 'cd_garage:AddKeys' event with the generated plate
+        end
 
         SetEntityAsNoLongerNeeded(spawnedCar)
 
+        -- Lock the spawned vehicle
+        SetVehicleDoorsLocked(spawnedCar, 2)  -- Lock the vehicle
+
         -- Update the last spawn time for this player
         lastSpawnTime[playerId] = GetGameTimer()
+        
+        if Config.EnableUnlockControl then
+            -- Register a control handler for unlocking the vehicle with the "L" key
+            Citizen.CreateThread(function()
+                while true do
+                    Citizen.Wait(0)
+                    local playerPed = PlayerPedId()
+                    local vehicle = GetVehiclePedIsIn(playerPed, false)
+        
+                    if IsControlJustReleased(0, Config.UnlockKey) then
+                        local serverId = GetPlayerServerId(PlayerId()) -- Get the player's server identifier
+        
+                        if not DoesEntityExist(vehicle) then
+                            -- Check if the player is near their owned spawned vehicle
+                            local playerCoords = GetEntityCoords(playerPed)
+                            local ownedVehicles = ESX.Game.GetVehicles()
+                            local playerOwnedVehicle = nil
+        
+                            for _, ownedVehicle in ipairs(ownedVehicles) do
+                                local distance = #(playerCoords - GetEntityCoords(ownedVehicle))
+                                if distance < 3.0 then
+                                    playerOwnedVehicle = ownedVehicle
+                                    break
+                                end
+                            end
+        
+                            if playerOwnedVehicle then
+                                vehicle = playerOwnedVehicle
+                            else
+                                return
+                            end
+                        end
+        
+                        local locked = GetVehicleDoorLockStatus(vehicle)        
+                        if locked == 2 then
+                            SetVehicleDoorsLocked(vehicle, 1)  -- Unlock the vehicle
+                            TriggerNotification(Config.UnlockedNotification) -- Display unlock notification
+                        else
+                            SetVehicleDoorsLocked(vehicle, 2)  -- Lock the vehicle
+                            TriggerNotification(Config.LockedNotification) -- Display lock notification
+                        end
+                    end
+                end
+            end)
+        end
+        
+
+function TriggerNotification(text)
+    if Config.UseESXNotifications then
+        ESX.ShowNotification(text)
+    else
+        SetNotificationTextEntry("STRING")
+        AddTextComponentSubstringPlayerName(text)
+        DrawNotification(false, false)
+    end
+end
+
+
     else
         local configMessage = Config.NoFreeSpaceMessage
         if Config.UseESXNotifications then
